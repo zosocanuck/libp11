@@ -51,7 +51,6 @@ PKCS11_enumerate_keys(PKCS11_TOKEN * token, PKCS11_KEY ** keyp, unsigned int *co
 {
 	PKCS11_TOKEN_private *priv = PRIVTOKEN(token);
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	if (priv->nkeys < 0) {
 		priv->nkeys = 0;
 		if (pkcs11_find_keys(token, CKO_PRIVATE_KEY)) {
@@ -79,7 +78,6 @@ PKCS11_KEY *PKCS11_find_key(PKCS11_CERT *cert)
         PKCS11_KEY *key;
         unsigned int n, count;
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	cpriv = PRIVCERT(cert);
         if (PKCS11_enumerate_keys(CERT2TOKEN(cert), &key, &count))
                 return NULL;
@@ -104,7 +102,6 @@ PKCS11_KEY *PKCS11_find_key_from_key(PKCS11_KEY * keyin)
         int isprivate;
         unsigned int n, count;
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
         kinpriv = PRIVKEY(keyin);
         tpriv = KEY2TOKEN(keyin);
         PKCS11_enumerate_keys(KEY2TOKEN(keyin), &key, &count);
@@ -199,7 +196,6 @@ EVP_PKEY *PKCS11_get_private_key(PKCS11_KEY * key)
 {
 	PKCS11_KEY_private *priv = PRIVKEY(key);
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	if (key->evp_key == NULL) {
 		EVP_PKEY *pk = EVP_PKEY_new();
 		if (pk == NULL)
@@ -217,7 +213,6 @@ fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 
 EVP_PKEY *PKCS11_get_public_key(PKCS11_KEY * key)
 {
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	return PKCS11_get_private_key(key);
 }
 
@@ -232,7 +227,6 @@ static int pkcs11_find_keys(PKCS11_TOKEN * token, unsigned int type)
 	CK_SESSION_HANDLE session;
 	int rv, res = -1;
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	/* Make sure we have a session */
 	if (!PRIVSLOT(slot)->haveSession && PKCS11_open_session(slot, 0))
 		return -1;
@@ -259,7 +253,6 @@ static int pkcs11_next_key(PKCS11_CTX * ctx, PKCS11_TOKEN * token,
 	CK_ULONG count;
 	int rv;
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	/* Get the next matching object */
 	rv = CRYPTOKI_call(ctx, C_FindObjects(session, &obj, 1, &count));
 	CRYPTOKI_checkerr(PKCS11_F_PKCS11_ENUM_KEYS, rv);
@@ -289,7 +282,6 @@ static int pkcs11_init_key(PKCS11_CTX * ctx, PKCS11_TOKEN * token,
 	(void)ctx;
 	(void)session;
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	size = sizeof(key_type);
 	if (pkcs11_getattr_var(token, obj, CKA_KEY_TYPE, &key_type, &size))
 		return -1;
@@ -349,7 +341,6 @@ void pkcs11_destroy_keys(PKCS11_TOKEN * token)
 {
 	PKCS11_TOKEN_private *priv = PRIVTOKEN(token);
 
-fprintf(stderr,"%s %s:%d\n",__FILE__,__FUNCTION__,__LINE__);
 	while (priv->nkeys > 0) {
 		PKCS11_KEY *key = &priv->keys[--(priv->nkeys)];
 

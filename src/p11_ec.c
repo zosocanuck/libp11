@@ -115,13 +115,10 @@ static int pkcs11_get_ec_private(PKCS11_KEY * key, EVP_PKEY * pk)
 		prkey = PKCS11_find_key_from_key(key);
 	}
 
-fprintf(stderr,"%s:%d %p %p\n",__FUNCTION__,__LINE__,key, pk);
-fprintf(stderr,"%s:%d %p %p\n",__FUNCTION__,__LINE__, prkey, pubkey);
 
 	if (!(ec = EVP_PKEY_get1_EC_KEY(pk))) {
 		ERR_clear_error();	/* the above flags an error */
 		ec = EC_KEY_new();
-fprintf(stderr,"%s:%d \n",__FUNCTION__,__LINE__);
 		EVP_PKEY_set1_EC_KEY(pk, ec);
 	}
 
@@ -129,7 +126,6 @@ fprintf(stderr,"%s:%d \n",__FUNCTION__,__LINE__);
 		if (key_getattr(prkey, CKA_SENSITIVE, &sensitive, sizeof(sensitive))
 		    || key_getattr(prkey, CKA_EXTRACTABLE, &extractable, sizeof(extractable))) {
 			EC_KEY_free(ec);
-fprintf(stderr,"%s:%d \n",__FUNCTION__,__LINE__);
 			return -1;
 		}
 
@@ -144,7 +140,6 @@ fprintf(stderr,"%s:%d \n",__FUNCTION__,__LINE__);
 			ec_params = OPENSSL_malloc(ec_paramslen);
 			if (ec_params) {
 			    ckrv = key_getattr_var(prkey, CKA_EC_PARAMS, ec_params, &ec_paramslen);
-fprintf(stderr,"%s:%d %#0lx %p %ld\n",__FUNCTION__,__LINE__,ckrv,ec_params, ec_paramslen);
 			    if (ckrv == CKR_OK) {
 				const unsigned char * a = ec_params;
 				    /* convert to OpenSSL parmas */
@@ -162,7 +157,6 @@ fprintf(stderr,"%s:%d %#0lx %p %ld\n",__FUNCTION__,__LINE__,ckrv,ec_params, ec_p
 			ec_point = OPENSSL_malloc(ec_pointlen);
 			if (ec_point) {
 			    ckrv = key_getattr_var(pubkey, CKA_EC_POINT, ec_point, &ec_pointlen);
-fprintf(stderr,"%s:%d %#0lx %p %ld\n",__FUNCTION__,__LINE__,ckrv,ec_point, ec_pointlen);
 			    if (ckrv == CKR_OK) {
 				/* PKCS#11 returns ASN1 octstring*/
 				const unsigned char * a;
@@ -174,13 +168,11 @@ fprintf(stderr,"%s:%d %#0lx %p %ld\n",__FUNCTION__,__LINE__,ckrv,ec_point, ec_po
 				    a = os->data;
 				    o2i_ECPublicKey(&ec, &a, os->length);
 				}
-EC_KEY_print_fp(stderr, ec, 5);
-fprintf(stderr,"%s:%d\n",__FUNCTION__,__LINE__);
+/* EC_KEY_print_fp(stderr, ec, 5); */
 			    }
 			}
 		}
 	}
-fprintf(stderr,"%s:%d %p \n",__FUNCTION__,__LINE__,ec);
 
 	/* If the key is not extractable, create a key object
 	 * that will use the card's functions to sign & decrypt
@@ -194,7 +186,6 @@ fprintf(stderr,"%s:%d %p \n",__FUNCTION__,__LINE__,ec);
 
 	if (sensitive || !extractable) {
 		ECDSA_set_ex_data(ec, 0, key);
-fprintf(stderr,"%s:%d %p \n",__FUNCTION__,__LINE__,ec);
 		return 0;
 	}
 
@@ -204,7 +195,6 @@ fprintf(stderr,"%s:%d %p \n",__FUNCTION__,__LINE__,ec);
 static int pkcs11_get_ec_public(PKCS11_KEY * key, EVP_PKEY * pk)
 {
 	/* TBD */
-fprintf(stderr,"%s:%d %p %p \n",__FUNCTION__,__LINE__,key,pk);
 	return pkcs11_get_ec_private(key, pk);
 }
 
@@ -212,7 +202,6 @@ fprintf(stderr,"%s:%d %p %p \n",__FUNCTION__,__LINE__,key,pk);
 static int pkcs11_ecdsa_sign_setup(EC_KEY *ec, BN_CTX *ctx_in,
 	BIGNUM **kinvp, BIGNUM **rp) {
 
-fprintf(stderr,"%s:%d \n",__FUNCTION__,__LINE__);
 
 	if (*kinvp != NULL)
 		BN_clear_free(*kinvp);
@@ -235,7 +224,6 @@ static ECDSA_SIG * pkcs11_ecdsa_do_sign(const unsigned char *dgst, int dlen,
 	int nLen = 48; /* HACK */;
 	int rv;
 
-fprintf(stderr,"%s:%d dgst %p:%d %p\n",__FUNCTION__,__LINE__,dgst,dlen,ec);
 	key = (PKCS11_KEY *) ECDSA_get_ex_data(ec, 0);
 	if  (key == NULL)
 		return NULL;
@@ -268,19 +256,16 @@ fprintf(stderr,"%s:%d dgst %p:%d %p\n",__FUNCTION__,__LINE__,dgst,dlen,ec);
 ECDSA_METHOD *PKCS11_get_ecdsa_method(void)
 {
 
-fprintf(stderr,"%s:%d %p\n",__FUNCTION__,__LINE__,ops);
     if (ops == NULL) {
 	ops = ECDSA_METHOD_new(NULL);
 	ECDSA_METHOD_set_sign(ops, pkcs11_ecdsa_do_sign);
 	ECDSA_METHOD_set_sign_setup(ops, pkcs11_ecdsa_sign_setup);
-fprintf(stderr,"%s:%d %p\n",__FUNCTION__,__LINE__,ops);
     }
     return ops;
 }
 
 void PKCS11_ecdsa_method_free(void)
 {
-fprintf(stderr,"%s:%d %p\n",__FUNCTION__,__LINE__,ops);
 	if (ops) {
 	ECDSA_METHOD_free(ops);
 	ops = NULL;
@@ -295,9 +280,7 @@ ECDSA_METHOD *PKCS11_get_ecdsa_method(void)
 {
 	static struct ecdsa_method sops;
 
-fprintf(stderr,"%s:%d %p\n",__FUNCTION__,__LINE__,&ops);
 	if (!sops.ecdsa_do_sign) {
-fprintf(stderr,"%s:%d\n",__FUNCTION__,__LINE__);
 /* question if compiler is copying each  member of struct or not */
 		sops = *ECDSA_get_default_method();
 		sops.ecdsa_do_sign = pkcs11_ecdsa_do_sign;
@@ -325,7 +308,6 @@ PKCS11_KEY_ops pkcs11_ec_ops = {
 #warning  "ECDSA support not built with libp11"
 void * PKCS11_get_ecdsa_method(void)
 {
-fprintf(stderr,"ECDSA support not built with libp11\n");
 	return NULL;
 }
 void PKCS11_ecdsa_method_free(void)
