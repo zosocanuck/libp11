@@ -236,3 +236,43 @@ PKCS11_verify(int type, const unsigned char *m, unsigned int m_len,
 	return -1;
 }
 
+int
+PKCS11_verify(int type, const unsigned char *m, unsigned int m_len,
+		  unsigned char *signature, unsigned int siglen, PKCS11_KEY * key)
+{
+	int rv;
+	PKCS11_KEY_private *priv;
+	PKCS11_SLOT *slot;
+	PKCS11_CTX *ctx;
+	CK_SESSION_HANDLE session;
+	CK_MECHANISM mechanism;
+	EVP_PKEY *pub;
+		
+	ctx = KEY2CTX(key);
+	priv = PRIVKEY(key);
+	slot = TOKEN2SLOT(priv->parent);
+	session = PRIVSLOT(slot)->session;
+	
+	memset(&mechanism, 0, sizeof(mechanism));
+	mechanism.mechanism = CKM_ECDSA;
+		
+	pub = PKCS11_get_public_key(key);
+
+	if((rv = CRYPTOKI_call(ctx, C_VerifyInit
+			       (session, &mechanism, priv->object))) == 0) {
+		rv = CRYPTOKI_call(ctx, C_Verify
+				   (session, m, m_len,signature, siglen));
+		
+		if (rv == CKR_OK)
+			return 1;
+	}
+
+	if (rv) {
+		PKCS11err(PKCS11_F_PKCS11_EC_KEY_VERIFY, pkcs11_map_err(rv));
+		return -1;
+	}
+	
+	return 0;
+		
+}
+
