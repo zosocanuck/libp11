@@ -26,6 +26,7 @@
 #include <string.h>
 #include <openssl/opensslv.h>
 #include <openssl/opensslconf.h>
+#include <openssl/bn.h>
 
 #define LIBP11_BUILD_WITHOUT_ECDSA
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECDSA)  && OPENSSL_VERSION_NUMBER >= 0x1000100f
@@ -223,6 +224,8 @@ static ECDSA_SIG * pkcs11_ecdsa_do_sign(const unsigned char *dgst, int dlen,
 	int siglen;
 	int nLen = 48; /* HACK */;
 	int rv;
+	
+	printf("%s=%d", dgst, dlen);
 
 	key = (PKCS11_KEY *) ECDSA_get_ex_data(ec, 0);
 	if  (key == NULL)
@@ -240,6 +243,32 @@ static ECDSA_SIG * pkcs11_ecdsa_do_sign(const unsigned char *dgst, int dlen,
 		}
 	}
 	return sig;
+}
+
+static int
+pkcs11_ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig, const EC_KEY * ec)
+{
+	PKCS11_KEY * pubkey = NULL;
+	PKCS11_KEY * key = NULL;
+	const char* p;
+	unsigned char sigret[512]; /* HACK for now */
+	int res;
+	int siglen;
+
+	key = (PKCS11_KEY *) ECDSA_get_ex_data(ec, 0);
+	if  (key == NULL)
+		return NULL;
+		
+	pubkey = PKCS11_find_key_from_key(key);
+	
+	siglen = sizeof(sigret);
+
+	BN_bn2bin(sig->r, &sigret[0]);
+	BN_bn2bin(sig->s, &sigret[32]);
+
+	res = PKCS11_verify(0, dgst, dgst_len, sigret, 64, pubkey);
+	
+	return res;
 }
 
 /*
@@ -260,6 +289,8 @@ ECDSA_METHOD *PKCS11_get_ecdsa_method(void)
 	ops = ECDSA_METHOD_new(NULL);
 	ECDSA_METHOD_set_sign(ops, pkcs11_ecdsa_do_sign);
 	ECDSA_METHOD_set_sign_setup(ops, pkcs11_ecdsa_sign_setup);
+	//ECDSA_METHOD_set_verify(ops, pkcs11_ecdsa_verify);
+	ECDSA_METHOD_set_do_verify(ops, pkcs11_ecdsa_do_verify);
     }
     return ops;
 }
@@ -279,12 +310,12 @@ void PKCS11_ecdsa_method_free(void)
 ECDSA_METHOD *PKCS11_get_ecdsa_method(void)
 {
 	static struct ecdsa_method sops;
-
 	if (!sops.ecdsa_do_sign) {
 /* question if compiler is copying each  member of struct or not */
 		sops = *ECDSA_get_default_method();
 		sops.ecdsa_do_sign = pkcs11_ecdsa_do_sign;
 		sops.ecdsa_sign_setup = pkcs11_ecdsa_sign_setup;
+		sops.ecdsa_do_verify = pkcs11_ecdsa_do_verify;
 	}
 	return &sops;
 }
