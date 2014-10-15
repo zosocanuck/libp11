@@ -224,22 +224,6 @@ int
 PKCS11_verify(int type, const unsigned char *m, unsigned int m_len,
 		  unsigned char *signature, unsigned int siglen, PKCS11_KEY * key)
 {
-	(void)type;
-	(void)m;
-	(void)m_len;
-	(void)signature;
-	(void)siglen;
-	(void)key;
-
-	/* PKCS11 calls go here */
-	PKCS11err(PKCS11_F_PKCS11_RSA_VERIFY, PKCS11_NOT_SUPPORTED);
-	return -1;
-}
-
-int
-PKCS11_verify(int type, const unsigned char *m, unsigned int m_len,
-		  unsigned char *signature, unsigned int siglen, PKCS11_KEY * key)
-{
 	int rv;
 	PKCS11_KEY_private *priv;
 	PKCS11_SLOT *slot;
