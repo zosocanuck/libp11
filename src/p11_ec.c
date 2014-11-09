@@ -254,6 +254,8 @@ pkcs11_ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG 
 	unsigned char sigret[512]; /* HACK for now */
 	int res;
 	int siglen;
+	
+	siglen = BN_num_bytes(sig->r);
 
 	key = (PKCS11_KEY *) ECDSA_get_ex_data(ec, 0);
 	if  (key == NULL)
@@ -264,9 +266,9 @@ pkcs11_ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG 
 	siglen = sizeof(sigret);
 
 	BN_bn2bin(sig->r, &sigret[0]);
-	BN_bn2bin(sig->s, &sigret[32]);
+	BN_bn2bin(sig->s, &sigret[siglen]);
 
-	res = PKCS11_verify(0, dgst, dgst_len, sigret, 64, pubkey);
+	res = PKCS11_verify(0, dgst, dgst_len, sigret, siglen*2, pubkey);
 	
 	return res;
 }
