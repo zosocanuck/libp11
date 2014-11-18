@@ -263,8 +263,6 @@ pkcs11_ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG 
 		
 	pubkey = PKCS11_find_key_from_key(key);
 	
-	siglen = sizeof(sigret);
-
 	BN_bn2bin(sig->r, &sigret[0]);
 	BN_bn2bin(sig->s, &sigret[siglen]);
 
